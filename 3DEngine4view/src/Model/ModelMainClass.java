@@ -62,6 +62,7 @@ public class ModelMainClass {
 	 dev.refresh();
 	 //view.display(dev.getBufferedImage());
 	 view.setCam(dev.getCamCord(),dev.getCenterCord());
+	 view.setLight(dev.getLightCord());
 	 view.displayM(dev.getBufferedImages());
 	 }
 	 
@@ -145,6 +146,31 @@ public class ModelMainClass {
 	public void setShow(boolean selected, boolean selected2, boolean selected3) {
 		// TODO Auto-generated method stub
 		dev.setShow(selected, selected2, selected3);
+		repaint();
+	}
+
+	public void setCam(int x, int y, int activeB) {
+		// TODO Auto-generated method stub
+		dev.setCam(x,y,activeB);
+		repaint();
+	}
+
+	public void setCenter(int x, int y, int activeB) {
+		// TODO Auto-generated method stub
+		dev.setCenter(x,y,activeB);
+		repaint();
+		
+	}
+
+	public void setLight(int x, int y, int activeB) {
+		// TODO Auto-generated method stub
+		dev.setLight(x, y, activeB);
+		repaint();
+	}
+
+	public void setShadow(boolean selected, boolean selected2, boolean selected3) {
+		// TODO Auto-generated method stub
+		dev.setShadow(selected,selected2,selected3);
 		repaint();
 	}
 }

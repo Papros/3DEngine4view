@@ -58,13 +58,17 @@ public class MainViewClass {
 	JCheckBox checkShow1;
 	JCheckBox checkShow2,checkShow3;
 	
+	JCheckBox checkLight1,checkLight2,checkLight3;
+	
 	CameraMovementController cameraController;
-	Vector2[] camCord,centerCord;
+	Vector2[] camCord,centerCord,lightCord;
 	int camSize = 20;
 	JButton cameraB[];
 	JButton centerB[];
+	JButton lightB[];
 	int activeB,activeType; //index of active button, type of button 0 - camera, 1 - center
 	SceenButtonListener bl;
+	private boolean movingB;
 	
 	public MainViewClass(ModelInput m){
 		
@@ -75,6 +79,7 @@ public class MainViewClass {
 		bl = new SceenButtonListener(this);
 		cameraB = new JButton[3];
 		centerB = new JButton[3];
+		lightB = new JButton[3];
 		
 		myFrame.addKeyListener(cameraController);
 		myFrame.setLayout(new BorderLayout());
@@ -110,14 +115,22 @@ public class MainViewClass {
 		menuBar.add(menuFile);
 		
 
+		MouseController mouseC = new MouseController(this);
+		
 		screen1 = new MyScreen();
 		screen1.setPreferredSize(new Dimension((int)(SCREEN_WIDTH),(int)(SCREEN_HEIGHT)));
+		screen1.addMouseMotionListener(mouseC);
+		screen1.addMouseListener(mouseC);
 		
 		screen2 = new MyScreen();
 		screen2.setPreferredSize(new Dimension((int)(SCREEN_WIDTH),(int)(SCREEN_HEIGHT)));
+		screen2.addMouseMotionListener(mouseC);
+		screen2.addMouseListener(mouseC);
 		
 		screen3 = new MyScreen();
 		screen3.setPreferredSize(new Dimension((int)(SCREEN_WIDTH),(int)(SCREEN_HEIGHT)));
+		screen3.addMouseMotionListener(mouseC);
+		screen3.addMouseListener(mouseC);
 		
 		screen4 = new MyScreen();
 		screen4.setPreferredSize(new Dimension((int)(SCREEN_WIDTH),(int)(SCREEN_HEIGHT)));
@@ -151,14 +164,35 @@ public class MainViewClass {
 		checkShow3.setSelected(true);
 		checkShow3.addChangeListener(checkL);
 		
+		
+		checkLight1 = new JCheckBox("Flat");
+		checkLight1.setSelected(true);
+		checkLight1.setActionCommand("FLAT");
+		checkLight1.addChangeListener(checkL);
+		checkLight2 = new JCheckBox("Gouraud");
+		checkLight2.setSelected(false);
+		checkLight2.setActionCommand("GOURAUD");
+		checkLight2.addChangeListener(checkL);
+		checkLight3 = new JCheckBox("Phong");
+		checkLight3.setActionCommand("PHONG");
+		checkLight3.setSelected(false);
+		checkLight3.addChangeListener(checkL);
+		
 		JPanel checkContainer = new JPanel();
 		checkContainer.add(checkShow1);
 		checkContainer.add(checkShow2);
 		checkContainer.add(checkShow3);
 		
+		JPanel checkContainer2 = new JPanel();
+		checkContainer2.add(checkLight1);
+		checkContainer2.add(checkLight2);
+		checkContainer2.add(checkLight3);
+		
 		checkContainer.setBorder(BorderFactory.createTitledBorder("DISPLAY:"));
+		checkContainer2.setBorder(BorderFactory.createTitledBorder("SHADING:"));
 		
 		lowerBar.add(checkContainer);
+		lowerBar.add(checkContainer2);
 		screenHolder = new JPanel();
 		screenHolder.setPreferredSize(new Dimension(  (int)(WIDTH),(int)(HEIGHT) ));
 		screenHolder.setBackground(Color.GRAY);
@@ -235,6 +269,10 @@ public class MainViewClass {
 			
 		case"SHOW":
 			MODEL.setShow(checkShow1.isSelected(),checkShow2.isSelected(),checkShow3.isSelected());
+			break;
+			
+		case"SHADOW":
+			MODEL.setShadow(checkLight1.isSelected(),checkLight2.isSelected(),checkLight3.isSelected());
 			break;
 		}
 		
@@ -340,28 +378,45 @@ public class MainViewClass {
 		for(int i=0;i<3;i++) {
 			cameraB[i] = new JButton();
 			centerB[i] = new JButton();
+			lightB[i] = new JButton();
+			
 			cameraB[i].addActionListener(bl);
 			centerB[i].addActionListener(bl);
+			lightB[i].addActionListener(bl);
+			
 			cameraB[i].setActionCommand("camera"+i);
 			cameraB[i].addKeyListener(cameraController);
+			
 			centerB[i].setActionCommand("center"+i);
 			centerB[i].addKeyListener(cameraController);
+			
+			lightB[i].setActionCommand("light"+i);
+			lightB[i].addKeyListener(cameraController);
+			
 			cameraB[i].setPreferredSize(new Dimension(camSize,camSize));
 			centerB[i].setPreferredSize(new Dimension(camSize,camSize));
+			lightB[i].setPreferredSize(new Dimension(camSize,camSize));
+			
 			cameraB[i].setIcon(new ImageIcon(camImg));
-			centerB[i].setIcon(new ImageIcon(lightImg));
+			centerB[i].setIcon(new ImageIcon(centerImg));
+			lightB[i].setIcon(new ImageIcon(lightImg));
 			
 			cameraB[i].setBounds((int)camCord[i].getX(),(int)camCord[i].getY(), camSize,camSize);
 			centerB[i].setBounds((int)centerCord[i].getX(),(int)centerCord[i].getY(), camSize, camSize);
-			
+			lightB[i].setBounds((int)lightCord[i].getX(),(int)lightCord[i].getY(), camSize, camSize);
 		}
 		
 		screen1.add(cameraB[0]);
 		screen1.add(centerB[0]);
+		screen1.add(lightB[0]);
+		
 		screen2.add(cameraB[1]);
 		screen2.add(centerB[1]);
+		screen2.add(lightB[1]);
+		
 		screen3.add(cameraB[2]);
 		screen3.add(centerB[2]);
+		screen3.add(lightB[2]);
 		
 	}
 	
@@ -370,10 +425,13 @@ public class MainViewClass {
 		try {
 		screen1.remove(cameraB[0]);
 		screen1.remove(centerB[0]);
+		screen1.remove(lightB[0]);
+		screen2.remove(lightB[1]);
 		screen2.remove(cameraB[1]);
 		screen2.remove(centerB[1]);
 		screen3.remove(cameraB[2]);
 		screen3.remove(centerB[2]);
+		screen3.remove(lightB[2]);
 		}catch(Exception e) {
 			
 		}
@@ -381,6 +439,7 @@ public class MainViewClass {
 		for(int i=0;i<3;i++) {
 			cameraB[i] = null;
 			centerB[i] = null;
+			lightB[i] = null;
 		}
 		
 	}
@@ -392,5 +451,69 @@ public class MainViewClass {
 		this.centerCord = centerCord;
 		
 	}
+
+
+	public void setMovingButton(String actionCommand) {
+		// TODO Auto-generated method stub
+
+		for(int i = 0; i < 3; i++) {
+			
+			if(actionCommand == cameraB[i].getActionCommand()) {
+				movingB = true;
+				activeB = i; activeType = 1;
+			}
+			if(actionCommand == centerB[i].getActionCommand()) {
+				movingB = true;
+				activeB = i; activeType = 2;
+			}
+			if(actionCommand == lightB[i].getActionCommand()) {
+				movingB = true;
+				activeB = i; activeType = 3;
+			}
+		}
+		
+	}
+
+	public void callToStop() {
+		// TODO Auto-generated method stub
+		if(movingB) {
+			movingB = false;
+			activeB = -1;
+			activeType = 0;
+		}
+	}
+
+
+	public boolean isMoved() {
+		// TODO Auto-generated method stub
+		return movingB;
+	}
+
+
+	public void callToMove(int x, int y) {
+			if(movingB) {
+			
+			if(activeType == 1) {
+				MODEL.setCam(x,y,activeB);
+			}
+			else
+			if(activeType == 2) {
+				MODEL.setCenter(x, y, activeB);
+			}
+			else
+			if(activeType ==3) {
+				MODEL.setLight(x,y,activeB);
+				//MODEL.setCenter(x, y, activeB);
+			}
+			
+		}
+	}
+
+
+	public void setLight(Vector2[] cord) {
+		// TODO Auto-generated method stub
+		lightCord = cord;
+	}
+
 
 }

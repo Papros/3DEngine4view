@@ -6,7 +6,8 @@ class Face {
 	private int A;
 	private int B;
 	private int C;
-	Color color;
+	private Color color;
+	private Color shade;
 	
 	public Color getColor() {
 		return color;
@@ -45,6 +46,14 @@ class Face {
 
 	public void setC(int c) {
 		C = c;
+	}
+
+	public Color getShade() {
+		return shade;
+	}
+
+	public void setShade(Color shade) {
+		this.shade = shade;
 	}
 	
 	

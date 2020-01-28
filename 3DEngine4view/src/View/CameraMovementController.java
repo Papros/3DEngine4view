@@ -32,8 +32,8 @@ public class CameraMovementController implements KeyListener{
 		case KeyEvent.VK_P: view.printCam(); break;
 		case KeyEvent.VK_O: view.printCenter(); break;
 		
-		case KeyEvent.VK_LEFT: view.rotate(-1); break;
-		case KeyEvent.VK_RIGHT: view.rotate(1); break;
+		case KeyEvent.VK_LEFT: view.rotate(1); break;
+		case KeyEvent.VK_RIGHT: view.rotate(-1); break;
 		case KeyEvent.VK_UP: view.rotateUp(1);  break;
 		case KeyEvent.VK_DOWN: view.rotateUp(-1); break;
 		}

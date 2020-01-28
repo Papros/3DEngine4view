@@ -75,5 +75,25 @@ public class ModelInput {
 		
 	}
 
+	public void setCam(int x, int y, int activeB) {
+		// TODO Auto-generated method stub
+		model.setCam(x,y,activeB);
+	}
+
+	public void setCenter(int x, int y, int activeB) {
+		// TODO Auto-generated method stub
+		model.setCenter(x,y,activeB);
+	}
+
+	public void setLight(int x, int y, int activeB) {
+		// TODO Auto-generated method stub
+		model.setLight(x,y,activeB);
+	}
+
+	public void setShadow(boolean selected, boolean selected2, boolean selected3) {
+		// TODO Auto-generated method stub
+		model.setShadow(selected,selected2,selected3);
+	}
+
 	
 }

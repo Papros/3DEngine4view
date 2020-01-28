@@ -35,4 +35,9 @@ public class ViewInput {
 		view.setCam(camCord,centerCord);
 	}
 
+	public void setLight(Vector2[] cord) {
+		// TODO Auto-generated method stub
+		view.setLight(cord);
+	}
+
 }

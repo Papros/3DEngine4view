@@ -27,11 +27,11 @@ public class SceenButtonListener implements ActionListener{
 		if(!edit) {
 			edit = true;
 			actionCommand = e.getActionCommand();
-		//	view.setMovingButton(e.getActionCommand());
+			view.setMovingButton(e.getActionCommand());
 		}else{
 			edit = false;
 			actionCommand = "";
-			//view.callToStop();
+			view.callToStop();
 			
 		}
 		

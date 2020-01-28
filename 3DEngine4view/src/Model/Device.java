@@ -1,8 +1,10 @@
 package Model;
 
 import java.awt.Color;
+import java.awt.GradientPaint;
 import java.awt.Graphics2D;
 import java.awt.List;
+import java.awt.Paint;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayDeque;
@@ -21,13 +23,18 @@ public class Device {
 	TransformMatrix viewMatrix;
 	Camera cam;
 	Mesh[] meshList;
-	
+	Light light;
+	double xRatio;
+	double yRatio;
 	Vector<IndependFace> facesToDraw;
 	
 	Vector2 frontCam, sideCam, topCam;
 	Vector2 frontCenter,sideCenter,topCenter;
-	
+	Vector2 frontLight, sideLight,topLight;
 	boolean edges,faces,textures;
+	boolean flat;
+	private boolean gouraud;
+	private boolean phong;
 	
 	public Device() {
 		cam = new Camera();
@@ -36,7 +43,11 @@ public class Device {
 		facesToDraw = new Vector<IndependFace>();
 		edges = true;
 		faces = true;
+		flat = true;
 		textures = true;
+		gouraud = false;
+		phong = false;
+		light = new Light(new Vector3(0,7,4));
 	}
 	
 	public Device(Camera c, Mesh[] m ) {
@@ -45,7 +56,11 @@ public class Device {
 		facesToDraw = new Vector<IndependFace>();
 		edges = true;
 		faces = true;
+		gouraud = false;
+		phong = false;
+		flat = true;
 		textures = true;
+		light = new Light(new Vector3(0,7,4));
 	}
 	
 	public void setMeshList(Mesh[] m) {
@@ -66,6 +81,8 @@ public class Device {
 		top = new BufferedImage(w,h, BufferedImage.TYPE_INT_ARGB);
 		side = new BufferedImage(w,h, BufferedImage.TYPE_INT_ARGB);
 		front = new BufferedImage(w,h, BufferedImage.TYPE_INT_ARGB);
+		xRatio = front.getHeight() / 20.0;
+		yRatio = front.getHeight() / 20.0;
 	}
 	
 	public void setShow(boolean b1,boolean b2,boolean b3) {
@@ -188,6 +205,7 @@ public class Device {
     		 cutF = new IndependFace[1];
     		 cutF[0] = in_tri;
     		 cutF[0].setColor(in_tri.getColor());
+    		 cutF[0].setShade(in_tri.getShade());
     	 }
     	 else if(ninsideP ==1 && noutsideP ==2) {
     		 cutF = new IndependFace[1];
@@ -197,6 +215,7 @@ public class Device {
     		 cutF[0].setB( inteserectPlane(plane_p, plane_n, insidePoints[0], outsidePoints[0]) );
     		 cutF[0].setC( inteserectPlane(plane_p, plane_n, insidePoints[0], outsidePoints[1]) );
     		 cutF[0].setColor(in_tri.getColor());
+    		 cutF[0].setShade(in_tri.getShade());
     	 }
     	 else if(ninsideP == 2 && noutsideP == 1) {
     		 
@@ -206,13 +225,14 @@ public class Device {
     		 cutF[0].setB(insidePoints[1]);
     		 cutF[0].setC(  inteserectPlane(plane_p, plane_n, insidePoints[0], outsidePoints[0]) );
     		 cutF[0].setColor(in_tri.getColor());
+    		 cutF[0].setShade(in_tri.getShade());
     		 
     		 cutF[1] = new IndependFace();
     		 cutF[1].setA(insidePoints[1]);
     		 cutF[1].setB( cutF[0].getC() );
     		 cutF[1].setC(  inteserectPlane(plane_p, plane_n, insidePoints[1], outsidePoints[0]) );
     		 cutF[1].setColor(in_tri.getColor());
-    		 
+    		 cutF[1].setShade(in_tri.getShade());
     	 }else {
     		 cutF = null;
     	 }
@@ -285,10 +305,21 @@ public class Device {
     			Vector3 vCameraRay = Vector3.vector_sub(triTransformed[0], cam.getvPosition());
     			
     			double dot = Vector3.dot_product(normal, vCameraRay);
-    			
+    			double xAvr = (a.getZ()+b.getZ()+c.getZ()) / 3.0;
     			if(dot < 0.0) {	
     			
-    				
+    				if(flat) {
+    					double dp = 0;
+    					Vector3 lightDir = Vector3.normalize(Vector3.vector_sub(new Vector3(light.getPosition().getX(),light.getPosition().getY(),-light.getPosition().getZ()), cam.getvTarget()));
+    					if(0.1 > Vector3.dot_product(lightDir, normal)) {
+    						dp = 0.1;
+    					}else {
+    						dp = Vector3.dot_product(lightDir, normal);
+    					}
+    					
+    					face.setShade(getColor(dp,face.getColor()));
+    					
+    				}
 					
     				
     				triViewed[0] = Vector3.transform(triTransformed[0], matView);
@@ -337,7 +368,7 @@ public class Device {
         				
         				IndependFace iface = new IndependFace(triProjected[0],triProjected[1],triProjected[2]);
         				iface.setColor(face.getColor());
-        				
+        				iface.setShade(face.getShade());
         				
         				facesToDraw.add(iface);
         				//drawFilledTriangle(triProjected[0].project(),triProjected[1].project(),triProjected[2].project(),Color.YELLOW);
@@ -405,6 +436,9 @@ public class Device {
     		}
     		
     		for(IndependFace f: toClip) {
+    			if(flat)
+    			drawFilledTriangle(f.getA().project(),f.getB().project(),f.getC().project(),f.getShade(),bmp);
+    			else
     			drawFilledTriangle(f.getA().project(),f.getB().project(),f.getC().project(),f.getColor(),bmp);
     		}
 
@@ -416,7 +450,24 @@ public class Device {
  		render4views(cam,meshes);
      }
      
-     private void drawTriangle(Vector2 pointA, Vector2 pointB, Vector2 pointC, Color c,BufferedImage img) {
+     //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$444
+     private Color getColor(double dp, Color color) {
+    	 
+    	 Color col = light.getColor();
+    	 int r = color.getRed();
+    	 int g = color.getGreen();
+    	 int b = color.getBlue();
+    	 
+    	 r = (int) (r * (dp) );
+    	 g = (int) (g * (dp) );
+    	 b = (int) (g * (dp));
+    	 
+		return new Color(r,g,b);
+	}
+     //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$4
+     
+     
+	private void drawTriangle(Vector2 pointA, Vector2 pointB, Vector2 pointC, Color c,BufferedImage img) {
     	 Path2D path = this.path(pointA, pointB, pointC);
     	 g2d = (Graphics2D) img.getGraphics();
          g2d.setColor(c);
@@ -426,6 +477,7 @@ public class Device {
      private void drawFilledTriangle(Vector2 pointA, Vector2 pointB, Vector2 pointC, Color c,BufferedImage img) {
     	 Path2D path = this.path(pointA, pointB, pointC);
     	 g2d = (Graphics2D) img.getGraphics();
+    	 
          g2d.setColor(c);
         if(faces)g2d.fill(path);
          g2d.setColor(Color.RED);
@@ -469,8 +521,7 @@ public class Device {
     }
 
 	private void render4views(Camera cam, Mesh[] meshes) {
-		double xRatio = front.getHeight() / 20.0;
-		double yRatio = front.getHeight() / 20.0;
+	
 		
 		Clear(Color.BLACK,front);
 		for(Mesh mesh: meshes) {
@@ -527,6 +578,10 @@ public class Device {
 		x = ( front.getWidth()/2.0f + cam.getvTarget().getX()*-xRatio ); 
 		y = ( front.getHeight()/2.0f + cam.getvTarget().getY()*-yRatio );
 		frontCenter = new Vector2(x,y);
+		
+		x = ( front.getWidth()/2.0f + light.getPosition().getX()*-xRatio ); 
+		y = ( front.getHeight()/2.0f + light.getPosition().getY()*-yRatio );
+		frontLight = new Vector2(x,y);
 		
 		drawFow(cam,1,front);
 		
@@ -588,6 +643,10 @@ public class Device {
 		y = ( side.getHeight()/2.0f + cam.getvTarget().getY()*-yRatio );
 		sideCenter = new Vector2(x,y);
 		
+		x = ( side.getWidth()/2.0f + light.getPosition().getZ()*-xRatio ); 
+		y = ( side.getHeight()/2.0f + light.getPosition().getY()*-yRatio );
+		sideLight = new Vector2(x,y);
+		
 		drawFow(cam,2,side);
 		
 		Clear(Color.BLACK,top);
@@ -647,6 +706,9 @@ public class Device {
 		y = ( top.getHeight()/2.0f + cam.getvTarget().getZ()*-yRatio );
 		topCenter = new Vector2(x,y);
 		
+		x = ( top.getWidth()/2.0f + light.getPosition().getX()*-xRatio ); 
+		y = ( top.getHeight()/2.0f + light.getPosition().getZ()*-yRatio );
+		topLight = new Vector2(x,y);
 		
 		drawFow(cam,3,top);
 	}
@@ -666,5 +728,83 @@ public class Device {
 	public Vector2[] getCenterCord() {
 		Vector2[] camCord = {frontCenter, sideCenter, topCenter};
 		return camCord;
+	}
+	
+	public Vector2[] getLightCord() {
+		Vector2[] ligcord = {frontLight,sideLight,topLight};
+		return ligcord;
+	}
+
+	public void setCam(int x, int y, int activeB) {
+		// TODO Auto-generated method stub
+		double xp,yp,zp;
+		switch(activeB+1) {
+		case 1: 
+			xp = ( x - front.getWidth()/2.0f ) / xRatio;
+			yp = ( y - front.getHeight()/2.0f) / yRatio;
+			cam.setPosition(xp, yp, cam.getvPosition().getZ());
+			break;
+		case 2: 
+			zp = ( x - front.getWidth()/2.0f ) / xRatio;
+			yp = ( y - front.getHeight()/2.0f) / yRatio;
+			cam.setPosition(cam.getvPosition().getX(), yp,zp);
+			break;
+		case 3: 
+			xp = ( x - front.getWidth()/2.0f ) / xRatio;
+			zp = ( y - front.getHeight()/2.0f) / yRatio;
+			cam.setPosition(xp,cam.getvPosition().getY(), zp);
+			break;
+		}
+		
+	}
+
+	public void setCenter(int x, int y, int activeB) {
+		// TODO Auto-generated method stub
+		double xp,yp,zp;
+		switch(activeB+1) {
+		case 1: 
+			xp = ( x - front.getWidth()/2.0f ) / -xRatio;
+			yp = ( y - front.getHeight()/2.0f) / -yRatio;
+			cam.setvTarget(xp, yp, cam.getvTarget().getZ());
+			break;
+		case 2: 
+			zp = ( x - front.getWidth()/2.0f ) / -xRatio;
+			yp = ( y - front.getHeight()/2.0f) / -yRatio;
+			cam.setvTarget(cam.getvTarget().getX(), yp,zp);
+			break;
+		case 3: 
+			xp = ( x - front.getWidth()/2.0f ) / -xRatio;
+			zp = ( y - front.getHeight()/2.0f) / -yRatio;
+			cam.setvTarget(xp,cam.getvTarget().getY(), zp);
+			break;
+		}
+	}
+	
+	public void setLight(int x,int y,int activeB) {
+		double xp,yp,zp;
+		switch(activeB+1) {
+		case 1: 
+			xp = ( x - front.getWidth()/2.0f ) / -xRatio;
+			yp = ( y - front.getHeight()/2.0f) / -yRatio;
+			light.setPosition(xp, yp, cam.getvTarget().getZ());
+			break;
+		case 2: 
+			zp = ( x - front.getWidth()/2.0f ) / -xRatio;
+			yp = ( y - front.getHeight()/2.0f) / -yRatio;
+			light.setPosition(cam.getvTarget().getX(), yp,zp);
+			break;
+		case 3: 
+			xp = ( x - front.getWidth()/2.0f ) / -xRatio;
+			zp = ( y - front.getHeight()/2.0f) / -yRatio;
+			light.setPosition(xp,cam.getvTarget().getY(), zp);
+			break;
+		}
+	}
+
+	public void setShadow(boolean selected, boolean selected2, boolean selected3) {
+		// TODO Auto-generated method stub
+		this.flat = selected;
+		this.gouraud = selected2;
+		this.phong = selected3;
 	}
 }

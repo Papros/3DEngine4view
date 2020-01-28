@@ -29,7 +29,7 @@ public class Camera {
 		dYaw = 0.0;
 		dTheta = 0.0;
 		dFar = 100.0;
-		dNear = 0.5;
+		dNear = 0.1;
 	}
 	
 
@@ -109,6 +109,12 @@ public class Camera {
 
 	public void setPosition(double d, double e, double f) {
 		this.vPosition.setCord(d, e, f);
+		
+		this.vLookDir = Vector3.normalize(  Vector3.vector_sub(vTarget, vPosition) );
+		double dis =  Vector3.vector_sub(vTarget, vPosition).lenght();
+	
+		this.vTarget = Vector3.vector_add(vPosition, Vector3.multiply(vLookDir, dis));
+		
 	}
 
 	//ratio mean height/width, like 9/16
@@ -123,10 +129,11 @@ public class Camera {
 		yp = Vector3.multiply( Vector3.normalize( Vector3.cross_product(xp, zp) ), xp.lenght()*ratio  );
 		
 		
-		fov[0] = Vector3.vector_add(zp, Vector3.vector_add(xp, yp) );
-		fov[1] = Vector3.vector_add(zp, Vector3.vector_sub(yp, xp) );
-		fov[2] = Vector3.vector_add(zp, Vector3.vector_sub(Vector3.multiply(yp, -1.0), xp) );
-		fov[3] = Vector3.vector_add(zp, Vector3.vector_sub(xp, yp) );
+		fov[3] = Vector3.vector_add(zp, Vector3.vector_add(xp, yp) );
+		fov[2] = Vector3.vector_add(zp, Vector3.vector_sub(yp, xp) );
+		fov[1] = Vector3.vector_add(zp, Vector3.vector_sub(Vector3.multiply(yp, -1.0), xp) );
+		fov[0] = Vector3.vector_add(zp, Vector3.vector_sub(xp, yp) );
+		
 		fov[0] = Vector3.vector_add(vPosition, fov[0]);
 		fov[1] = Vector3.vector_add(vPosition, fov[1]);
 		fov[2] = Vector3.vector_add(vPosition, fov[2]);
@@ -147,6 +154,13 @@ public class Camera {
 		*/
 		
 		return fov;
+	}
+
+
+	public void setvTarget(double xp, double yp, double zp) {
+		// TODO Auto-generated method stub
+		vTarget.setCord(xp, yp, zp);
+		this.vLookDir = Vector3.normalize( Vector3.vector_sub(vTarget, vPosition) );
 	}
 	
 	

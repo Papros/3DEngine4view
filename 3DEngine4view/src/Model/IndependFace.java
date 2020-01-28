@@ -7,7 +7,7 @@ public class IndependFace {
 	private Vector3 B;
 	private Vector3 C;
 	private Color color;
-	
+	private Color shade;
 	
 	public IndependFace(Vector3 a,Vector3 b,Vector3 c) {
 		this.A = a;
@@ -63,5 +63,13 @@ public class IndependFace {
 
 	public void setColor(Color color) {
 		this.color = color;
+	}
+
+	public Color getShade() {
+		return shade;
+	}
+
+	public void setShade(Color shade) {
+		this.shade = shade;
 	}
 }

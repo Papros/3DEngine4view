@@ -20,6 +20,9 @@ public class CheckBoxListener implements ChangeListener{
 		case "EDGES": view.call("SHOW"); break;
 		case "FACES": view.call("SHOW"); break;
 		case "TEXTURES": view.call("SHOW"); break;
+		case "FLAT":
+		case "GOURAUD":
+		case "PHONG":  view.call("SHADOW"); break;
 		}
 	}
 
